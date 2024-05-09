@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing SVG shapes with D3</title>
+</head>
+
+<body>
+    <h1>SVG circle</h1>
+    
+    <svg width="300" height="300" style="background-color: lightgray;">
+        <circle cx="150" cy="150" r="100" fill="blue" />
+    </svg>
+
+    <h1>D3 circle</h1>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        d3.select('body')
+            .append('svg')
+            .attr('height', 400)
+            .attr('width', 400)
+            .attr('style', 'background: gray;')
+            .append('circle')
+            .attr('cx', 150)
+            .attr('cy', 150)
+            .attr('r', 100)
+            .attr('style', 'margin: 0 auto;')
+            .attr('fill', 'green');
+
+    </script>
+</body>
+
+</html>
