@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing with data</title>
+</head>
+
+<body>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const dataset = [5, 10, 15, 20, 30, 40, 50];
+
+        const col_w = 20;
+        const svg_w = dataset.length * col_w * 2 + col_w * 4;
+        const svg_h = Math.max(...dataset) + 10;
+
+        const padding = 2;
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('width', svg_w)
+            .attr('height', svg_h)
+            .style('background-color', 'lightgray');
+
+        svg.selectAll('rect')
+            .data(dataset)
+            .enter()
+            .append('rect')
+            .attr('x', (d, i) => (1 + 5 * i) * (col_w / 2))
+            .attr('y', d => svg_h - d)
+            .attr('width', col_w)
+            .attr('height', d => d)
+            .attr('fill', d => `rgb(0, ${d * 3}, 0)`);
+    </script>
+</body>
+
+</html>
