@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Line Chart</title>
+</head>
+
+<body>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_h = 300;
+        const svg_w = 500;
+
+        const progress_of_sales = [
+            { 'progress': 10, 'sales': 20 },
+            { 'progress': 20, 'sales': 14 },
+            { 'progress': 30, 'sales': 20 },
+            { 'progress': 40, 'sales': 21 },
+            { 'progress': 50, 'sales': 15 },
+            { 'progress': 60, 'sales': 22 },
+            { 'progress': 70, 'sales': 9 },
+            { 'progress': 80, 'sales': 6 },
+            { 'progress': 90, 'sales': 23 },
+            { 'progress': 100, 'sales': 7 },
+        ];
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('height', svg_h)
+            .attr('width', svg_w)
+            .style('background-color', 'lightgray');
+
+        const line_fun = d3.line()
+            .x(d => d.progress * 4)
+            .y(d => d.sales * 10);
+        // .curve(d3.curveBasis);
+
+        const visualize_data = svg.append('path')
+            .attr('d', line_fun(progress_of_sales))
+            .attr('stroke', 'blue')
+            .attr('stroke-width', 2)
+            .attr('fill', 'none');
+
+        const labels = svg.selectAll('text')
+            .data(progress_of_sales)
+            .enter()
+            .append('text')
+            .text(d => d.sales)
+            .attr('x', d => d.progress * 4)
+            .attr('y', d => d.sales * 10 - 5)
+            .attr('dy', d => -5)
+            .attr('text-anchor', 'start')
+            .attr('font-size', '16px')
+            .attr('fill', '#6d6d6d')
+            .attr('font-family', 'sans-serif')
+            // .attr('font-weight', 'bold');
+            .attr('font-weight', (d, i) => i == 0 || i == progress_of_sales.length - 1 ? 'bold' : 'normal');
+    </script>
+</body>
+
+</html>
