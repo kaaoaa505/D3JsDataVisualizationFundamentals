@@ -8,18 +8,73 @@
 </head>
 
 <body>
-
-    <ul>
-        <li>
-            <a href="index_001.html">Example 001</a>
-        </li>
-    </ul>
-
     <script src="./js/d3@7.js"></script>
     <script type="module">
-        d3.select('body')
-            .append('h1')
-            .text('hello from d3 h1 text');
+        const svg_h = 100;
+        const svg_w = 500;
+
+        let data_store = [];
+        let total = 0;
+        let salesAverage = 0;
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('height', svg_h)
+            .attr('width', svg_w)
+            .style('background-color', 'lightgray');
+
+        svg.append("path")
+            .attr('stroke', 'blue')
+            .attr('stroke-width', 2)
+            .attr('fill', 'none');
+
+        const path = d3.path();
+
+        function buildLinePath() {
+            d3.select("path").attr("d", path);
+        }
+
+        function showTotalsTable() {
+            const table = d3.select("body").append('table');
+
+            salesAverage = Number(total) / Number(data_store.length);
+
+            const row = table.selectAll('tr');
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Total: ' + total);
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Average: ' + salesAverage.toFixed(2));
+        }
+
+        let i = 0;
+        d3.csv('monthly_sales.csv', function (data, _index) {
+            const x = (data.month - 20240001) / 3.25;
+            const y = svg_h - data.sales;
+
+            total += Number(data.sales);
+
+            data_store.push(data);
+
+            if (i == 0) {
+                path.moveTo(x, y);
+                i = 1;
+            } else {
+                path.lineTo(x, y);
+            }
+
+            buildLinePath();
+        }).then(_res => {
+            showTotalsTable();
+        });
+
     </script>
 </body>
 

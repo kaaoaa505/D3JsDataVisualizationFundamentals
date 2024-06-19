@@ -8,11 +8,6 @@
 </head>
 
 <body>
-
-    <a href="/">Back</a>
-
-    <hr>
-
     <script src="./js/d3@7.js"></script>
     <script type="module">
         const svg_h = 100;
@@ -60,26 +55,27 @@
         }
 
         let i = 0;
-        d3.csv('monthly_sales.csv', function (data, _index) {
-            const x = (data.month - 20240001) / 3.25;
-            const y = svg_h - data.sales;
+        d3.json('monthly_sales.json').then(data_array => {
+            data_array.forEach(data => {
+                const x = (data.month - 20240001) / 3.25;
+                const y = svg_h - data.sales;
 
-            total += Number(data.sales);
+                total += Number(data.sales);
 
-            data_store.push(data);
+                data_store.push(data);
 
-            if (i == 0) {
-                path.moveTo(x, y);
-                i = 1;
-            } else {
-                path.lineTo(x, y);
-            }
+                if (i == 0) {
+                    path.moveTo(x, y);
+                    i = 1;
+                } else {
+                    path.lineTo(x, y);
+                }
+            });
 
             buildLinePath();
-        }).then(_res => {
+        }).then(_ => {
             showTotalsTable();
         });
-
     </script>
 </body>
 
