@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Working with Scaling Data</title>
+</head>
+
+<body>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_h = 400;
+        const svg_w = 500;
+
+        let data_store = [];
+        let total = 0;
+        let salesAverage = 0;
+        let path_index = 0;
+
+        const local_json_file = 'monthly_sales_by_category.json';
+
+        function buildLinePath(data_array) {
+            path_index++;
+
+            const x_scale = d3.scaleLinear([
+                d3.min(data_array.monthlySales, d => d.month),
+                d3.max(data_array.monthlySales, d => d.month)
+            ], [0, svg_w]);
+
+            const y_scale = d3.scaleLinear([
+                d3.min(data_array.monthlySales, d => d.sales),
+                d3.max(data_array.monthlySales, d => d.sales)
+            ], [0, svg_h]);
+
+            const svg = d3.select('body')
+                .append('svg')
+                .attr('height', svg_h)
+                .attr('width', svg_w)
+                .style('background-color', 'lightgray');
+
+            svg.append("path")
+                .attr('id', 'path_' + path_index)
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2)
+                .attr('fill', 'none');
+
+            const path = d3.path();
+
+            i = 0;
+            data_array.monthlySales.forEach(data => {
+                const x = x_scale(data.month);
+                const y = y_scale(data.sales);
+
+                total += Number(data.sales);
+
+                data_store.push(data);
+
+                if (i == 0) {
+                    path.moveTo(x, y);
+                    i = 1;
+                } else {
+                    path.lineTo(x, y);
+                }
+            });
+
+            d3.select("path#path_" + path_index).attr("d", path);
+        }
+
+        function showTotalsTable() {
+            const table = d3.select("body").append('table');
+
+            salesAverage = Number(total) / Number(data_store.length);
+
+            const row = table.selectAll('tr');
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Total: ' + total);
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Average: ' + salesAverage.toFixed(2));
+        }
+
+        let i = 0;
+        d3.json(local_json_file).then(data_obj => {
+            data_obj.contents.forEach(data => {
+                buildLinePath(data);
+            });
+        }).then(_ => {
+            showTotalsTable();
+        });
+    </script>
+</body>
+
+</html>
