@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Working with Web API</title>
+</head>
+
+<body>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_h = 100;
+        const svg_w = 500;
+
+        let data_store = [];
+        let total = 0;
+        let salesAverage = 0;
+        let path_index = 0;
+
+        // const web_api_json_source = 'https://raw.githubusercontent.com/bsullins/d3js-resources/master/monthlySalesbyCategoryMultiple.json';
+        const web_api_json_source = 'https://api.github.com/repos/bsullins/d3js-resources/contents/monthlySalesbyCategoryMultiple.json?ref=master';
+
+        function buildLinePath(data_array) {
+            path_index++;
+            const svg = d3.select('body')
+                .append('svg')
+                .attr('height', svg_h)
+                .attr('width', svg_w)
+                .style('background-color', 'lightgray');
+
+            svg.append("path")
+                .attr('id', 'path_' + path_index)
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2)
+                .attr('fill', 'none');
+
+            const path = d3.path();
+
+            i = 0;
+            data_array.monthlySales.forEach(data => {
+                const x = (data.month - 20130101) / 3.25;
+                const y = svg_h - data.sales;
+
+                total += Number(data.sales);
+
+                data_store.push(data);
+
+                if (i == 0) {
+                    path.moveTo(x, y);
+                    i = 1;
+                } else {
+                    path.lineTo(x, y);
+                }
+            });
+
+            d3.select("path#path_" + path_index).attr("d", path);
+        }
+
+        function showTotalsTable() {
+            const table = d3.select("body").append('table');
+
+            salesAverage = Number(total) / Number(data_store.length);
+
+            const row = table.selectAll('tr');
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Total: ' + total);
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Average: ' + salesAverage.toFixed(2));
+        }
+
+        let i = 0;
+        d3.json(web_api_json_source).then(data_obj => {
+
+            const decodedData = JSON.parse(window.atob(data_obj.content)); // decode the string
+
+            for (let key in decodedData) {
+                decodedData[key].forEach(data => {
+                    buildLinePath(data);
+                });
+            }
+        }).then(_ => {
+            showTotalsTable();
+        });
+    </script>
+</body>
+
+</html>
