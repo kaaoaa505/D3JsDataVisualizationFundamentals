@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adding Filter</title>
+</head>
+
+<body>
+    <div>
+        Show labels:
+        <select name="label_options" id="label_options">
+            <option value="all">All</option>
+            <option value="min_max">Min & Max</option>
+            <option value="none">None</option>
+        </select>
+    </div>
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_h = 300;
+        const svg_w = 500;
+
+        const progress_of_sales = [
+            { 'progress': 10, 'sales': 20 },
+            { 'progress': 20, 'sales': 14 },
+            { 'progress': 30, 'sales': 20 },
+            { 'progress': 40, 'sales': 21 },
+            { 'progress': 50, 'sales': 15 },
+            { 'progress': 60, 'sales': 22 },
+            { 'progress': 70, 'sales': 9 },
+            { 'progress': 80, 'sales': 6 },
+            { 'progress': 90, 'sales': 23 },
+            { 'progress': 100, 'sales': 7 },
+        ];
+
+        const showMinMax = (data_set, key, val, type) => {
+            if (type === 'all') return val;
+
+            const max = d3.max(data_set, data => data[key]);
+            const min = d3.min(data_set, data => data[key]);
+
+            if (type === 'min_max' && (val === max || val === min)) return val;
+            
+            return null;
+        }
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('height', svg_h)
+            .attr('width', svg_w)
+            .style('background-color', 'lightgray');
+
+        const dots_fun = svg.selectAll('circle')
+            .data(progress_of_sales)
+            .enter()
+            .append('circle')
+            .attr('fill', '#666666')
+            .attr('opacity', d => d.progress / 100)
+            .attr('cx', (d, i) => (1 + 5 * i) * (d.sales / 2))
+            .attr('cy', d => svg_h - d.sales * 10)
+            .attr('r', 5);
+
+        const labels = svg.selectAll('text')
+            .data(progress_of_sales)
+            .enter()
+            .append('text')
+            // .text(d => d.sales === d3.min(progress_of_sales, pos => pos.sales) || d.sales === d3.max(progress_of_sales, pos => pos.sales) ? d.sales : '')
+            .text(d => d.sales)
+            .attr('x', (d, i) => (1 + 5 * i) * (d.sales / 2))
+            .attr('y', d => svg_h - d.sales * 10)
+            .attr('dy', d => -5)
+            .attr('text-anchor', 'start')
+            .attr('font-size', '16px')
+            .attr('fill', d => d.sales >= 15 ? 'green' : 'red')
+            .attr('font-family', 'sans-serif')
+            // .attr('font-weight', 'bold');
+            .attr('font-weight', (d, i) => i == 0 || i == progress_of_sales.length - 1 ? 'bold' : 'normal');
+
+        d3.select('select').on('change', d => {
+            var option_selected = d3.select('#label_options').node().value;
+
+            svg.selectAll('text')
+                .data(progress_of_sales)
+                .text(s => showMinMax(progress_of_sales, 'sales', s.sales, option_selected))
+        })
+
+    </script>
+</body>
+
+</html>
