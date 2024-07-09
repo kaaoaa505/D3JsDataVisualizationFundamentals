@@ -177,7 +177,10 @@
                 }
             });
 
-            d3.select("path#path_" + path_index).attr("d", path);
+            d3.select("path#path_" + path_index)
+            .transition()
+            .duration(500)
+            .attr("d", path);
         }
 
         function showTotalsTable() {
