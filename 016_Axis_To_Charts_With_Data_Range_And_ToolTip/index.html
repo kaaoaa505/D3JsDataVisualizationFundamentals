@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axis to charts with data range range and tooltip</title>
+
+    <style>
+        h1 {
+            font-family: sans-serif;
+            font-weight: 300;
+        }
+
+        .x_axis path,
+        .y_axis path,
+        .x_axis line,
+        .y_axis line {
+            fill: none;
+            stroke: black;
+            shape-rendering: crispEdges;
+        }
+
+        .x_axis text,
+        .y_axis text {
+            font-family: sans-serif;
+            font-size: 10px;
+        }
+
+        .tooltip {
+            position: absolute;
+            max-width: 200px;
+            height: auto;
+            padding: 5px;
+            background-color: white;
+            border-radius: 5px;
+            box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            font-family: sans-serif;
+            font-size: 12px;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        Data Range:
+        <select name="data_options" id="data_options">
+            <option value="all">All</option>
+            <option value="q1">Q1</option>
+            <option value="q2">Q2</option>
+            <option value="q3">Q3</option>
+            <option value="q4">Q4</option>
+        </select>
+    </div>
+
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        let json_data = null;
+
+        function getDateMonth(date_number) {
+            const str_date = new String(date_number);
+            const year = str_date.substr(0, 4);
+            const month = str_date.substr(4, 2);
+            const day = str_date.substr(6, 2);
+
+            return new Date(year, month, day);
+        }
+        const svg_h = 400;
+        const svg_w = 600;
+        const padding = 25;
+
+        let data_store = [];
+        let total = 0;
+        let salesAverage = 0;
+        let path_index = 0;
+
+        const tooltip = d3.select('body')
+            .append('div')
+            .attr('class', 'tooltip')
+            .style('opacity', 0)
+
+        const local_json_file = 'monthly_sales_by_category.json';
+
+        function buildLinePath(data_array) {
+            path_index++;
+
+            const x_scale = d3.scaleTime([
+                d3.min(data_array.monthlySales, d => getDateMonth(d.month)),
+                d3.max(data_array.monthlySales, d => getDateMonth(d.month))
+            ], [padding, svg_w - padding]);
+
+            const y_scale = d3.scaleLinear([
+                d3.min(data_array.monthlySales, d => d.sales),
+                d3.max(data_array.monthlySales, d => d.sales)
+            ], [svg_h - padding, padding]);
+
+            const x_axis = d3.axisBottom(x_scale).tickFormat(d3.utcFormat('%b'));
+            const y_axis = d3.axisLeft(y_scale);
+
+            const svg = d3.select('body')
+                .append('svg')
+                .attr('height', svg_h)
+                .attr('width', svg_w)
+                .attr('id', 'svg_' + data_array.category)
+                .style('background-color', 'lightgray');
+
+            svg.append("path")
+                .attr('id', 'path_' + path_index)
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2)
+                .attr('fill', 'none')
+                .attr('class', 'path_' + data_array.category);
+
+            svg.append('g').call(x_axis)
+                .attr('class', 'x_axis')
+                .attr('transform', `translate(0, ${svg_h - padding})`);
+
+            svg.append('g').call(y_axis)
+                .attr('class', 'y_axis')
+                .attr('transform', `translate(${padding}, 0)`);
+
+            const path = d3.path();
+
+            i = 0;
+            data_array.monthlySales.forEach(data => {
+                const x = x_scale(getDateMonth(data.month));
+                const y = y_scale(data.sales);
+
+                total += Number(data.sales);
+
+                data_store.push(data);
+
+                if (i == 0) {
+                    path.moveTo(x, y);
+                    i = 1;
+                } else {
+                    path.lineTo(x, y);
+                }
+            });
+
+            d3.select("path#path_" + path_index).attr("d", path);
+
+            const dots = svg.selectAll('circle')
+                .data(data_array.monthlySales)
+                .enter()
+                .append('circle')
+                .attr('cx', data => x_scale(getDateMonth(data.month)))
+                .attr('cy', data => y_scale(data.sales))
+                .attr('r', 4)
+                .attr('fill', 'darkgray')
+                .attr('class', 'circle_' + data_array.category)
+                .attr('data-sales', data => data.sales)
+                .on('mouseover', mouse_over_event => {
+                    const target_sales = parseFloat(d3.select(mouse_over_event.target).attr('data-sales'));
+
+                    tooltip.transition().duration(500)
+                        .style('opacity', .85)
+                        .style('left', parseFloat(mouse_over_event.pageX) + 'px')
+                        .style('top', parseFloat(mouse_over_event.pageY) + 'px');
+
+                    tooltip.html(`<strong>Sales ${target_sales} K</strong>`)
+                })
+                .on('mouseout', () => {
+                    tooltip.transition().duration(500)
+                        .style('opacity', 0);
+                });
+        }
+
+        function updateLinePath(data_array) {
+            data_store = [];
+            path_index++;
+
+            const x_scale = d3.scaleTime([
+                d3.min(data_array.monthlySales, d => getDateMonth(d.month)),
+                d3.max(data_array.monthlySales, d => getDateMonth(d.month))
+            ], [padding, svg_w - padding]);
+
+            const y_scale = d3.scaleLinear([
+                d3.min(data_array.monthlySales, d => d.sales),
+                d3.max(data_array.monthlySales, d => d.sales)
+            ], [svg_h - padding, padding]);
+
+            const x_axis_generator = d3.axisBottom(x_scale)
+                .tickFormat(d3.utcFormat('%b'))
+                .ticks(data_array.monthlySales.length);
+            const y_axis_generator = d3.axisLeft(y_scale)
+                .ticks(4);
+
+            const svg = d3.select('body').select('#svg_' + data_array.category)
+                .attr('height', svg_h)
+                .attr('width', svg_w)
+                .style('background-color', 'lightgray');
+
+            svg.selectAll('#path_' + path_index)
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2)
+                .attr('fill', 'none');
+
+            svg.selectAll('g.x_axis').call(x_axis_generator);
+
+            svg.selectAll('g.y_axis').call(y_axis_generator);
+
+            const path = d3.path();
+
+            i = 0;
+            data_array.monthlySales.forEach(data => {
+                const x = x_scale(getDateMonth(data.month));
+                const y = y_scale(data.sales);
+
+                total += Number(data.sales);
+
+                data_store.push(data);
+
+                if (i == 0) {
+                    path.moveTo(x, y);
+                    i = 1;
+                } else {
+                    path.lineTo(x, y);
+                }
+            });
+
+            d3.select("path#path_" + path_index)
+                .transition()
+                .duration(500)
+                .attr("d", path);
+
+            svg.selectAll('circle').remove();
+
+            const dots = svg.selectAll('circle')
+                .data(data_array.monthlySales)
+                .enter()
+                .append('circle')
+                .attr('cx', data => x_scale(getDateMonth(data.month)))
+                .attr('cy', data => y_scale(data.sales))
+                .attr('r', 4)
+                .attr('fill', 'darkgray')
+                .attr('class', 'circle_' + data_array.category)
+                .attr('data-sales', data => data.sales)
+                .on('mouseover', mouse_over_event => {
+                    const target_sales = parseFloat(d3.select(mouse_over_event.target).attr('data-sales'));
+
+                    tooltip.transition().duration(500)
+                        .style('opacity', .85)
+                        .style('left', parseFloat(mouse_over_event.pageX) + 'px')
+                        .style('top', parseFloat(mouse_over_event.pageY) + 'px');
+
+                    tooltip.html(`<strong>Sales ${target_sales} K</strong>`)
+                })
+                .on('mouseout', () => {
+                    tooltip.transition().duration(500)
+                        .style('opacity', 0);
+                });
+        }
+
+        function showTotalsTable() {
+            const table = d3.select("body").append('table');
+
+            salesAverage = Number(total) / Number(data_store.length);
+
+            const row = table.selectAll('tr');
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Total: ' + total);
+
+            row.data([1])
+                .enter()
+                .append('tr')
+                .append('td')
+                .text('Sales Average: ' + salesAverage.toFixed(2));
+        }
+
+        let i = 0;
+        d3.json(local_json_file).then(data_obj => {
+            json_data = data_obj;
+            data_obj.contents.forEach(data => {
+                buildLinePath(data);
+            });
+        }).then(_ => {
+            showTotalsTable();
+        });
+
+        d3.select('select').on('change', (d, i) => {
+            path_index = 0;
+
+            const option_selected = d3.select('#data_options').node().value;
+
+            json_data.contents.forEach(data => {
+                let target_json_result = {};
+
+                if (data != null) {
+                    switch (option_selected) {
+                        case 'q1':
+                            target_json_result = {
+                                category: data.category,
+                                region: data.region,
+                                monthlySales: data.monthlySales.slice(0, 3)
+                            }
+                            break;
+                        case 'q2':
+                            target_json_result = {
+                                category: data.category,
+                                region: data.region,
+                                monthlySales: data.monthlySales.slice(3, 6)
+                            }
+                            break;
+                        case 'q3':
+                            target_json_result = {
+                                category: data.category,
+                                region: data.region,
+                                monthlySales: data.monthlySales.slice(6, 9)
+                            }
+                            break;
+                        case 'q4':
+                            target_json_result = {
+                                category: data.category,
+                                region: data.region,
+                                monthlySales: data.monthlySales.slice(9, 12)
+                            }
+                            break;
+                        case 'all':
+                            target_json_result = {
+                                category: data.category,
+                                region: data.region,
+                                monthlySales: data.monthlySales.slice()
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    updateLinePath(target_json_result);
+                }
+            });
+
+
+
+        })
+    </script>
+</body>
+
+</html>
