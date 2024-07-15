@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing Maps USA states 2018</title>
+</head>
+
+<body>
+    <h1>Drawing Maps USA states 2018</h1>
+
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_width = 900;
+        const svg_height = 600;
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('width', svg_width)
+            .attr('height', svg_height)
+            .style('background-color', 'lightgray');
+
+        // const path = d3.geoPath();
+        const path = d3.geoPath().projection(d3.geoAlbers());
+
+        d3.json('cb_2018_us_state_500k.geojson').then(json_data => {
+            svg.selectAll('path')
+                .data(json_data.features)
+                .enter()
+                .append('path')
+                .attr('d', path)
+                .attr('stroke', 'blue')
+                .attr('stroke-width', 2)
+                .attr('fill', '#666666');
+        })
+
+    </script>
+</body>
+
+</html>
