@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drawing SA cities map with colors</title>
+</head>
+
+<body>
+    <h1>Drawing SA cities map with colors</h1>
+
+    <script src="./js/d3@7.js"></script>
+    <script type="module">
+        const svg_width = 900;
+        const svg_height = 600;
+
+        const svg = d3.select('body')
+            .append('svg')
+            .attr('width', svg_width)
+            .attr('height', svg_height)
+            .style('background-color', 'lightgray');
+
+        const path = d3.geoPath();
+
+        d3.json('cities.geojson').then(json_data => {
+            let projection = d3.geoAlbers()
+                .fitSize([svg_width, svg_height], json_data);
+            path.projection(projection);
+
+            svg.selectAll('path')
+                .data(json_data.features)
+                .enter()
+                .append('path')
+                .attr('d', path)
+                .attr('stroke', 'green')
+                .attr('stroke-width', 1)
+                .attr('fill', 'blue');
+        })
+
+    </script>
+</body>
+
+</html>
