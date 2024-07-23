@@ -23,19 +23,38 @@
 
         const path = d3.geoPath();
 
+        const color_scale_range = d3.scaleLinear().range(['#8c510a','#bf812d','#dfc27d','#f6e8c3','#f5f5f5','#c7eae5','#80cdc1','#35978f','#01665e']);
+
         d3.json('cities.geojson').then(json_data => {
             let projection = d3.geoAlbers()
                 .fitSize([svg_width, svg_height], json_data);
+
             path.projection(projection);
+
+            const features_count = json_data.features.length;
+                    console.log(json_data.features);
+
+            color_scale_range.domain([
+                0,
+                d3.max(json_data.features, feature => Number.parseInt(feature.properties.city_id))
+            ])
 
             svg.selectAll('path')
                 .data(json_data.features)
                 .enter()
                 .append('path')
                 .attr('d', path)
-                .attr('stroke', 'green')
+                .attr('stroke', 'none')
                 .attr('stroke-width', 1)
-                .attr('fill', 'blue');
+                .attr('fill', feature => {
+                    var value = Number.parseInt(feature.properties.city_id);
+
+                    if(value){
+                        return color_scale_range(value)
+                    }else{
+                        return 'blue';
+                    }
+                });
         })
 
     </script>
